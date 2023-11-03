@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Players</title>
+    <style>
+        body {
+            background-color: #1a1a1a;
+            color: #ffffff;
+            font-family: Arial, sans-serif;
+        }
+        .user-list {
+            list-style-type: none;
+            padding: 0;
+        }
+        .user-item {
+            background-color: #333;
+            margin: 10px auto;
+            padding: 10px;
+            border-radius: 5px;
+            width: 50%;
+        }
+        .header {
+            text-align: center;
+        }
+    </style>
+</head>
+<body>
+    <h1 class="header">Players</h1>
+    <ul class="user-list" id="userList">
+        <!-- Users will be displayed here -->
+    </ul>
+
+    <script>
+        // TODO: Change to your lambda API URL
+        const apiUrl = 'http://localhost:9000';
+
+        // Function to fetch and display user data
+        async function fetchUserData() {
+            try {
+                const response = await fetch(apiUrl);
+                const userData = await response.json();
+
+                const userList = document.getElementById('userList');
+                userList.innerHTML = ''; // Clear the existing list
+
+                userData["users"].forEach(user => {
+                    if (user.playing) {
+                        const userItem = document.createElement('li');
+                        userItem.className = 'user-item';
+                        userItem.innerHTML = `
+                            <h3>${user.username}</h3>
+                            <i>last seen ${user.last_seen}</i><br><br>
+                            Playing ${user.playing}<br>
+                        `;
+                        userList.appendChild(userItem);
+                    }
+                });
+            } catch (error) {
+                console.error('Error fetching data:', error);
+            }
+        }
+
+        // Call the fetchUserData function to populate the list
+        fetchUserData();
+    </script>
+</body>
+</html>
