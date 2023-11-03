@@ -90,7 +90,9 @@ async fn function_handler(event: Request) -> Result<Response<Body>, Error> {
         update(&conn, who, playing).await?;
     }
 
-    let mut rows = conn.query("SELECT * FROM users", ()).await?;
+    let mut rows = conn
+        .query("SELECT * FROM users WHERE username != ?", &[who])
+        .await?;
 
     if needs_sync {
         message += "\t(the database was freshly synced before serving the request)\n";
