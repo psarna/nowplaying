@@ -83,10 +83,11 @@ async fn function_handler(event: Request) -> Result<Response<Body>, Error> {
     }
     let conn = db.connect()?;
 
-    let mut message = format!("Hi {who}!\n");
+    let mut message = serde_json::json!({
+        "user": who,
+    });
 
     if let Some(playing) = playing {
-        message += &format!("Enjoying {playing} huh\n");
         update(&conn, who, playing).await?;
     }
 
@@ -94,18 +95,20 @@ async fn function_handler(event: Request) -> Result<Response<Body>, Error> {
         .query("SELECT * FROM users WHERE username != ?", &[who])
         .await?;
 
-    if needs_sync {
-        message += "\t(the database was freshly synced before serving the request)\n";
-    } else {
-        message += "\t(serving cached results)\n"
-    }
+    message["needed_sync"] = serde_json::json!(needs_sync);
 
+    let mut users = Vec::new();
     while let Ok(Some(row)) = rows.next() {
         let user = row.get_str(0)?;
         let last_seen = row.get::<i64>(1)?;
         let last_seen = format_last_seen(last_seen);
         let playing = row.get_str(2)?;
-        message += &format!("User {user},\tlast seen {last_seen},\tplaying {playing}\n",);
+        users.push(serde_json::json!({
+            "username": user,
+            "last_seen": last_seen,
+            "playing": playing,
+        }));
+        message["users"] = serde_json::json!(users);
     }
 
     // Return something that implements IntoResponse.
@@ -113,7 +116,7 @@ async fn function_handler(event: Request) -> Result<Response<Body>, Error> {
     let resp = Response::builder()
         .status(200)
         .header("content-type", "text/html")
-        .body(message.into())
+        .body(serde_json::to_string(&message)?.into())
         .map_err(Box::new)?;
     Ok(resp)
 }
