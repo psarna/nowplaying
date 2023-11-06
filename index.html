@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html>
+
 <head>
     <title>Players</title>
     <style>
@@ -8,10 +9,12 @@
             color: #ffffff;
             font-family: Arial, sans-serif;
         }
+
         .user-list {
             list-style-type: none;
             padding: 0;
         }
+
         .user-item {
             background-color: #333;
             margin: 10px auto;
@@ -19,13 +22,57 @@
             border-radius: 5px;
             width: 50%;
         }
+
         .header {
             text-align: center;
         }
+
+        .form-container {
+            display: flex;
+            justify-content: center;
+            margin: 20px 0;
+        }
+
+        form {
+            display: flex;
+            width: 50%;
+            justify-content: space-between;
+        }
+
+        input[type="text"] {
+            flex-grow: 1;
+            margin-right: 10px;
+            /* Add some space between the text fields and the submit button */
+            padding: 10px;
+        }
+
+        input[type="submit"] {
+            padding: 10px 20px;
+            background-color: #4CAF50;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+
+        input[type="submit"]:hover {
+            background-color: #45a049;
+        }
     </style>
 </head>
+
 <body>
     <h1 class="header">Players</h1>
+
+    <!-- Add Player Form -->
+    <div class="form-container">
+        <form id="addPlayerForm">
+            <input type="text" id="name" name="name" placeholder="Username" required>
+            <input type="text" id="playing" name="playing" placeholder="Playing" required>
+            <input type="submit" value="Submit">
+        </form>
+    </div>
+
     <ul class="user-list" id="userList">
         <!-- Users will be displayed here -->
     </ul>
@@ -33,6 +80,29 @@
     <script>
         // TODO: Change to your lambda API URL
         const apiUrl = 'http://localhost:9000';
+
+        document.getElementById('addPlayerForm').addEventListener('submit', function (event) {
+            event.preventDefault(); // Prevent the default form submission
+            const username = document.getElementById('name').value;
+            const playing = document.getElementById('playing').value;
+
+            fetch(`${apiUrl}?name=${encodeURIComponent(username)}&playing=${encodeURIComponent(playing)}`, {
+                method: 'GET'
+            })
+                .then(response => response.json())
+                .then(data => {
+                    // Handle the response data
+                    console.log(data);
+                    fetchUserData(); // Optionally, refresh the user list
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                });
+
+            // Clear the form fields after submission (optional)
+            document.getElementById('name').value = '';
+            document.getElementById('playing').value = '';
+        });
 
         // Function to fetch and display user data
         async function fetchUserData() {
@@ -64,4 +134,5 @@
         fetchUserData();
     </script>
 </body>
+
 </html>

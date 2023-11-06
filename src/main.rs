@@ -69,33 +69,33 @@ async fn function_handler(event: Request) -> Result<Response<Body>, Error> {
         .query_string_parameters_ref()
         .and_then(|params| params.first("playing"));
 
-    let needs_sync = !db_fresh();
-
     let sync_url = std::env::var("LIBSQL_SYNC_URL").map_err(Box::new)?;
     let auth_token = std::env::var("LIBSQL_AUTH_TOKEN").unwrap_or("".to_string());
     let db = open_db(sync_url, auth_token).await.map_err(Box::new)?;
 
-    if needs_sync {
-        tracing::info!("Syncing database with remote counterpart");
-        db.sync().await?;
-    } else {
-        tracing::info!("Database exists, no sync needed")
-    }
     let conn = db.connect()?;
 
     let mut message = serde_json::json!({
         "user": who,
     });
 
+    let updating = playing.is_some();
     if let Some(playing) = playing {
         update(&conn, who, playing).await?;
     }
 
-    let mut rows = conn
-        .query("SELECT * FROM users WHERE username != ?", &[who])
-        .await?;
+    let needed_sync = if !db_fresh() || updating {
+        tracing::info!("Syncing database with remote counterpart");
+        db.sync().await?;
+        true
+    } else {
+        tracing::info!("Database exists, no sync needed");
+        false
+    };
 
-    message["needed_sync"] = serde_json::json!(needs_sync);
+    let mut rows = conn.query("SELECT * FROM users", ()).await?;
+
+    message["needed_sync"] = serde_json::json!(needed_sync);
 
     let mut users = Vec::new();
     while let Ok(Some(row)) = rows.next() {
