@@ -123,11 +123,7 @@ async fn function_handler(event: Request) -> Result<Response<Body>, Error> {
 
 #[tokio::main]
 async fn main() -> Result<(), Error> {
-    tracing_subscriber::fmt()
-        .with_max_level(tracing::Level::INFO)
-        .with_target(false)
-        .without_time()
-        .init();
+    tracing_subscriber::fmt().init();
 
     run(service_fn(function_handler)).await
 }
