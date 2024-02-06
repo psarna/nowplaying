@@ -104,6 +104,14 @@
             document.getElementById('playing').value = '';
         });
 
+        function escapeHtml(unsafe) {
+            return unsafe
+                 .replace(/&/g, "&amp;")
+                 .replace(/</g, "&lt;")
+                 .replace(/>/g, "&gt;")
+                 .replace(/"/g, "&quot;")
+                 .replace(/'/g, "&#039;");
+         }
         // Function to fetch and display user data
         async function fetchUserData() {
             try {
@@ -118,9 +126,9 @@
                         const userItem = document.createElement('li');
                         userItem.className = 'user-item';
                         userItem.innerHTML = `
-                            <h3>${user.username}</h3>
+                            <h3>${escapeHtml(user.username)}</h3>
                             <i>last seen ${user.last_seen}</i><br><br>
-                            Playing ${user.playing}<br>
+                            Playing ${escapeHtml(user.playing)}<br>
                         `;
                         userList.appendChild(userItem);
                     }
